@@ -213,6 +213,8 @@ int main(int argc, char **argv) {
   calibra.p1_ = dist_coeffs[2];
   calibra.p2_ = dist_coeffs[3];
   calibra.k3_ = dist_coeffs[4];
+  std::cout << "fx:" << calibra.fx_ << " fy:" << calibra.fy_
+            << " cx:" << calibra.cx_ << " cy:" << calibra.cy_ << std::endl;
   Eigen::Vector3d init_euler_angle =
       calibra.init_rotation_matrix_.eulerAngles(2, 1, 0);
   Eigen::Vector3d init_transation = calibra.init_translation_vector_;
@@ -244,6 +246,10 @@ int main(int argc, char **argv) {
   calib_params[3] = T[0];
   calib_params[4] = T[1];
   calib_params[5] = T[2];
+  std::cout << "Initial euler angle:" << calib_params[0] << ","
+            << calib_params[1] << "," << calib_params[2] << std::endl;
+  std::cout << "Initial translation:" << calib_params[3] << ","
+            << calib_params[4] << "," << calib_params[5] << std::endl;
   sensor_msgs::PointCloud2 pub_cloud;
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr rgb_cloud(
       new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -252,10 +258,15 @@ int main(int argc, char **argv) {
   pcl::toROSMsg(*rgb_cloud, pub_cloud);
   pub_cloud.header.frame_id = "livox";
   calibra.init_rgb_cloud_pub_.publish(pub_cloud);
+  std::cout << "before calibra.getProjectionImg" << std::endl;
   cv::Mat init_img = calibra.getProjectionImg(calib_params);
   cv::imshow("Initial extrinsic", init_img);
-  cv::imwrite("/home/ycj/data/calib/init.png", init_img);
-  cv::waitKey(1000);
+  cv::imwrite("/home/zph/data/calib/init.png", init_img);
+  printf("pause here, press key to continue ...\n");
+//  cv::waitKey(0);//wzy add
+//  printf("exit here ...\n");
+//  exit(0);//wzy add
+
 
   if (use_rough_calib) {
     roughCalib(calibra, calib_params, DEG2RAD(0.1), 50);
@@ -379,6 +390,17 @@ int main(int argc, char **argv) {
             << std::endl;
   }
   outfile << 0 << "," << 0 << "," << 0 << "," << 1 << std::endl;
+
+  //也可以直接输出到终端，把R,t, 以及 T = (R,t) 的逆矩阵输出到终端
+  Eigen::Matrix4d T_matrix;
+  T_matrix.block<3, 3>(0, 0) = R;
+  T_matrix.block<3, 1>(0, 3) = T;
+  T_matrix.block<1, 3>(3, 0) = Eigen::Vector3d::Zero().transpose();
+  T_matrix(3, 3) = 1;
+  std::cout << "[C_world2norm] T_matrix:" << std::endl << T_matrix << std::endl;
+  Eigen::Matrix4d T_inv = T_matrix.inverse();
+  std::cout << "[C_norm2world] T_inv:" << std::endl << T_inv << std::endl;
+
   cv::Mat opt_img = calibra.getProjectionImg(calib_params);
   cv::imshow("Optimization result", opt_img);
   cv::imwrite("/home/ycj/data/calib/opt.png", opt_img);

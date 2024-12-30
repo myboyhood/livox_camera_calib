@@ -1,0 +1,38 @@
+%YAML:1.0
+
+# Topic name in rosbag
+PointCloudTopic: "/livox/lidar"
+ImageTopic: "/camera/color/image_raw"
+
+# Lidar Data type(custom msg or pointcloud2)
+Data.custom_msg: 0
+# Initial extrinsic (usually provided by hand measurement or cad design)
+
+ExtrinsicMat: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: d
+  data: [0.0,   -1.0,   0.0,    -0.155,
+         0.0,  0.0,  -1.0,      -0.0,
+         1.0,   0.0,    0.0,    -0.0,
+         0.0,   0.0,    0.0,    1.0]
+# Params for Canny Edge Extraction
+
+Canny.gray_threshold: 15 # 20
+Canny.len_threshold: 100 # 200
+
+# Params for Voxel Cutting & Plane Fitting & Edge Extraction
+Voxel.size: 3.0 # 1.0
+Voxel.down_sample_size: 0.005 # 0.02
+Plane.min_points_size: 300 # 60
+Plane.normal_theta_min: 15
+Plane.normal_theta_max: 160
+Plane.max_size: 10
+Ransac.dis_threshold: 0.015 # origin first 0.015 决定了平面拟合的精度
+Ransac.iter_num: 200
+Edge.min_dis_threshold: 0.10 #origin first 0.03  second 0.15
+Edge.max_dis_threshold: 0.25 #origin first 0.06 second 0.25
+
+# Params for color point clouds
+Color.dense: 1
+Color.intensity_threshold: 10

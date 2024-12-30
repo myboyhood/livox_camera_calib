@@ -1,0 +1,17 @@
+# Data path. adjust them!
+common:
+    image_file: "/home/zph/hard_disk/rosbag/lidar/SJTU_campus/calib_dataset/New_camera_setup_SJTU_ME_Box/1735093223_632.png"
+    pcd_file: "/home/zph/hard_disk/rosbag/lidar/SJTU_campus/calib_dataset/New_camera_setup_SJTU_ME_Box/calib_box_output_1735093223_632.pcd"
+    result_file: "/home/zph/hard_disk/rosbag/lidar/SJTU_campus/calib_dataset/New_camera_setup_SJTU_ME_Box/extrinsic_new_camera_setup.txt"
+
+# Camera Parameters. Adjust them!
+camera:
+    camera_matrix: [384.286, 0.0,      317.217,
+                0.0,     383.856,  248.555,
+                0.0,     0.0,      1.0     ]
+    dist_coeffs: [-0.054195, 0.06343025714159012, 0.00022216796060092747, -0.0002736836322583258, -0.02043997123837471]
+
+# Calibration Parameters.!
+calib:
+    calib_config_file: "/home/zph/ros_ws/lidar_ws/src/livox_camera_calib/config/config_indoor_D455_livox_horizon.yaml"
+    use_rough_calib: true # set true if your initial_extrinsic is bad

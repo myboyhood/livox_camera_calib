@@ -53,7 +53,7 @@ public:
 
   int rgb_edge_minLen_ = 200;
   int rgb_canny_threshold_ = 20;
-  int min_depth_ = 2.5;
+  int min_depth_ = 0.5; //wzy change from 2.5 to 0.5
   int max_depth_ = 50;
   int plane_max_size_ = 5;
   float detect_line_threshold_ = 0.02;
@@ -393,9 +393,9 @@ void Calibration::edgeDetector(
   }
   edge_cloud->width = edge_cloud->points.size();
   edge_cloud->height = 1;
-  // cv::imshow("canny result", canny_result);
-  // cv::imshow("edge result", edge_img);
-  // cv::waitKey();
+   cv::imshow("canny result", canny_result);
+   cv::imshow("edge result", edge_img);
+   cv::waitKey(100);
 }
 
 void Calibration::projection(
@@ -670,6 +670,7 @@ void Calibration::initVoxel(
       int g = rand() % 256;
       int b = rand() % 256;
       voxel_map[position]->voxel_color << r, g, b;
+      std::cout << "position: " << position.x << " " << position.y << " " << position.z << std::endl;
     }
   }
   // sensor_msgs::PointCloud2 pub_cloud;
@@ -678,7 +679,10 @@ void Calibration::initVoxel(
   // rgb_cloud_pub_.publish(pub_cloud);
   for (auto iter = voxel_map.begin(); iter != voxel_map.end(); iter++) {
     if (iter->second->cloud->size() > 20) {
+      printf("[before down_sampling_voxel] position = %ld, %ld, %ld, size() = %zu\n",
+             iter->first.x, iter->first.y, iter->first.z, iter->second->cloud->size());
       down_sampling_voxel(*(iter->second->cloud), 0.02);
+      printf("[after down_sampling_voxel] iter->second->cloud->size() = %zu\n", iter->second->cloud->size());
     }
   }
 }
@@ -692,6 +696,7 @@ void Calibration::LiDAREdgeExtraction(
   lidar_line_cloud_3d =
       pcl::PointCloud<pcl::PointXYZI>::Ptr(new pcl::PointCloud<pcl::PointXYZI>);
   for (auto iter = voxel_map.begin(); iter != voxel_map.end(); iter++) {
+    printf("iter->second->cloud->size() = %zu\n", iter->second->cloud->size());
     if (iter->second->cloud->size() > 50) {
       std::vector<Plane> plane_list;
       // 创建一个体素滤波器
@@ -773,6 +778,7 @@ void Calibration::LiDAREdgeExtraction(
         extract.filter(cloud_f);
         *cloud_filter = cloud_f;
       }
+      printf("plane_list.size() = %zu\n", plane_list.size());
       if (plane_list.size() >= 2) {
         sensor_msgs::PointCloud2 planner_cloud2;
         pcl::toROSMsg(color_planner_cloud, planner_cloud2);
@@ -784,8 +790,10 @@ void Calibration::LiDAREdgeExtraction(
       std::vector<pcl::PointCloud<pcl::PointXYZI>> line_cloud_list;
       calcLine(plane_list, voxel_size_, iter->second->voxel_origin,
                line_cloud_list);
+      printf("line_cloud_list.size() = %zu\n", line_cloud_list.size());
       // ouster 5,normal 3
-      if (line_cloud_list.size() > 0 && line_cloud_list.size() <= 8) {
+//      if (line_cloud_list.size() > 0 && line_cloud_list.size() <= 8) {//origin
+      if (line_cloud_list.size() > 0 && line_cloud_list.size() <= 30) {//wzy
 
         for (size_t cloud_index = 0; cloud_index < line_cloud_list.size();
              cloud_index++) {
@@ -1423,6 +1431,9 @@ cv::Mat Calibration::getProjectionImg(const Vector6d &extrinsic_params) {
   cv::Mat depth_projection_img;
   projection(extrinsic_params, raw_lidar_cloud_, INTENSITY, false,
              depth_projection_img);
+             //wzy debug
+  imshow("depth_projection_img", depth_projection_img);
+  cv::waitKey(50);
   cv::Mat map_img = cv::Mat::zeros(height_, width_, CV_8UC3);
   for (int x = 0; x < map_img.cols; x++) {
     for (int y = 0; y < map_img.rows; y++) {
